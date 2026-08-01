@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KiouAI — 評価関数コンバータ</title>
+<meta name="description" content="棋桜（KIOU）の配信アセットから NNUE 評価関数 nn.bin を取り出すブラウザツール。すべてクライアントサイドで動作します。" />
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fbfbfd;
+    --panel: #ffffff;
+    --fg: #1c1c1f;
+    --muted: #6b6b76;
+    --line: #e3e3e9;
+    --accent: #2f80ed;
+    --accent-soft: #eaf2fd;
+    --ok: #1f9d55;
+    --err: #d64545;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14141a;
+      --panel: #1d1d25;
+      --fg: #eceef2;
+      --muted: #9a9aa8;
+      --line: #2e2e3a;
+      --accent: #62a0f5;
+      --accent-soft: #1e2a3d;
+      --ok: #4ec27f;
+      --err: #f07373;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 48px 20px 80px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    line-height: 1.75;
+    font-size: 15px;
+  }
+  main { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 26px; letter-spacing: .02em; margin: 0 0 6px; }
+  .lede { color: var(--muted); margin: 0 0 36px; }
+  h2 { font-size: 15px; margin: 36px 0 12px; letter-spacing: .04em; }
+  ol { padding-left: 1.4em; margin: 0; }
+  li { margin-bottom: 10px; }
+  a { color: var(--accent); }
+  code, .mono { font-family: var(--mono); font-size: 12.5px; }
+
+  .url {
+    display: flex; gap: 8px; align-items: stretch;
+    margin: 10px 0 4px;
+  }
+  .url input {
+    flex: 1; min-width: 0;
+    font-family: var(--mono); font-size: 11.5px;
+    padding: 9px 11px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--panel); color: var(--fg);
+  }
+  button {
+    font: inherit; font-size: 13px;
+    padding: 9px 14px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--panel); color: var(--fg);
+    cursor: pointer; white-space: nowrap;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  button.primary:hover { filter: brightness(1.08); color: #fff; }
+
+  #drop {
+    margin-top: 14px;
+    border: 1.5px dashed var(--line); border-radius: 14px;
+    background: var(--panel);
+    padding: 44px 24px;
+    text-align: center;
+    transition: border-color .15s, background .15s;
+    cursor: pointer;
+  }
+  #drop:hover, #drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  #drop strong { display: block; font-size: 16px; margin-bottom: 4px; font-weight: 600; }
+  #drop span { color: var(--muted); font-size: 13px; }
+
+  #out { margin-top: 20px; }
+  .card {
+    border: 1px solid var(--line); border-radius: 12px;
+    background: var(--panel); padding: 18px 20px;
+  }
+  .card.bad { border-color: var(--err); }
+  .status { font-weight: 600; margin-bottom: 12px; }
+  .status.ok { color: var(--ok); }
+  .status.bad { color: var(--err); }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0 0 16px; font-size: 13px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; font-family: var(--mono); font-size: 11.5px; word-break: break-all; }
+  .arch {
+    font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 12px; margin: 0 0 16px; word-break: break-all; line-height: 1.6;
+  }
+  .note { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .warn { color: var(--err); }
+  footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>KiouAI 評価関数コンバータ</h1>
+  <p class="lede">
+    棋桜（KIOU）の配信アセット <code>.bundle</code> から NNUE 評価関数 <code>nn.bin</code> を取り出します。
+    処理はすべてブラウザ内で完結し、ファイルはどこにも送信されません。
+  </p>
+
+  <h2>1. 配信アセットをダウンロード</h2>
+  <div class="url">
+    <input id="bundleUrl" readonly
+      value="https://t4-asset.neconome-storage.uk/production/asset-3.0/iOS/1cef6109d3ae10e89f6a7c210e2413d5.bundle" />
+    <button id="copyUrl">コピー</button>
+    <button class="primary" id="openUrl">開く</button>
+  </div>
+  <p class="note">
+    約 19.4 MiB。配信元が CORS ヘッダを返さないため、このページから直接取得することはできません。
+    404 になる場合は <a href="https://github.com/IPA-Patch/KiouAI#アセット-url-の調べ方">URL の調べ方</a>を参照してください。
+  </p>
+
+  <h2>2. ここにドロップ</h2>
+  <div id="drop" tabindex="0" role="button" aria-label="バンドルファイルを選択">
+    <strong>.bundle をドラッグ＆ドロップ</strong>
+    <span>クリックしてファイルを選択することもできます</span>
+  </div>
+  <input type="file" id="picker" accept=".bundle,application/octet-stream" hidden />
+
+  <div id="out"></div>
+
+  <footer>
+    <a href="https://github.com/IPA-Patch/KiouAI">IPA-Patch/KiouAI</a> —
+    評価関数の権利は株式会社ネコノメに帰属します。取り出したファイルの再配布はしないでください。
+    本ツールは同社とは無関係の非公式プロジェクトです。
+  </footer>
+</main>
+
+<script>
+"use strict";
+
+// ---------------------------------------------------------------------------
+// LZ4 block decompressor
+//
+// UnityFS uses raw LZ4 blocks (not the LZ4 frame format). LZ4HC is only a
+// higher-effort encoder — the decoder below handles both.
+// ---------------------------------------------------------------------------
+function lz4Decompress(src, destSize) {
+  const dst = new Uint8Array(destSize);
+  const sEnd = src.length;
+  let s = 0, d = 0;
+
+  while (s < sEnd) {
+    const token = src[s++];
+
+    // literals
+    let litLen = token >>> 4;
+    if (litLen === 15) {
+      let n;
+      do { n = src[s++]; litLen += n; } while (n === 255);
+    }
+    if (s + litLen > sEnd || d + litLen > destSize) throw new Error("LZ4: literal run overflows buffer");
+    dst.set(src.subarray(s, s + litLen), d);
+    s += litLen; d += litLen;
+
+    // the final sequence ends after its literals
+    if (s >= sEnd) break;
+
+    // match
+    const offset = src[s++] | (src[s++] << 8);
+    if (offset === 0 || offset > d) throw new Error("LZ4: match offset out of range");
+    let matchLen = token & 0x0f;
+    if (matchLen === 15) {
+      let n;
+      do { n = src[s++]; matchLen += n; } while (n === 255);
+    }
+    matchLen += 4;
+    if (d + matchLen > destSize) throw new Error("LZ4: match run overflows buffer");
+
+    // must be byte-wise: matches are allowed to overlap the write cursor
+    let m = d - offset;
+    for (let i = 0; i < matchLen; i++) dst[d++] = dst[m++];
+  }
+
+  if (d !== destSize) throw new Error(`LZ4: expected ${destSize} bytes, produced ${d}`);
+  return dst;
+}
+
+// ---------------------------------------------------------------------------
+// UnityFS container
+// ---------------------------------------------------------------------------
+function Reader(buf) {
+  const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  let p = 0;
+  return {
+    get pos() { return p; },
+    set pos(v) { p = v; },
+    u16() { const v = view.getUint16(p, false); p += 2; return v; },
+    u32() { const v = view.getUint32(p, false); p += 4; return v; },
+    i64() { const v = view.getBigInt64(p, false); p += 8; return Number(v); },
+    bytes(n) { const v = buf.subarray(p, p + n); p += n; return v; },
+    cstr() {
+      const start = p;
+      while (p < buf.length && buf[p] !== 0) p++;
+      const v = new TextDecoder().decode(buf.subarray(start, p));
+      p++; // NUL
+      return v;
+    },
+    align(n) { p = Math.ceil(p / n) * n; },
+  };
+}
+
+const COMPRESSION = { 0: "none", 1: "LZMA", 2: "LZ4", 3: "LZ4HC" };
+
+function decompressBlock(chunk, uncompressedSize, flags) {
+  const kind = flags & 0x3f;
+  if (kind === 0) return chunk;
+  if (kind === 2 || kind === 3) return lz4Decompress(chunk, uncompressedSize);
+  throw new Error(`未対応の圧縮形式です: ${COMPRESSION[kind] ?? kind}`);
+}
+
+/** Unwrap a UnityFS bundle into its concatenated SerializedFile payload. */
+function unpackUnityFS(buf) {
+  const r = Reader(buf);
+
+  const signature = r.cstr();
+  if (signature !== "UnityFS") throw new Error(`UnityFS ではありません（signature=${signature || "?"}）`);
+
+  const format = r.u32();
+  const unityVersion = r.cstr();
+  const unityRevision = r.cstr();
+  r.i64();                          // total bundle size
+  const compressedInfoSize = r.u32();
+  const uncompressedInfoSize = r.u32();
+  const flags = r.u32();
+
+  if (flags & 0x80) throw new Error("blocksInfoAtEnd 付きのバンドルには未対応です");
+
+  // format 7+ pads the header out to a 16-byte boundary
+  if (format >= 7) r.align(16);
+
+  const info = decompressBlock(r.bytes(compressedInfoSize), uncompressedInfoSize, flags);
+
+  // ...and 0x200 pads again, this time in front of the data blocks
+  if (flags & 0x200) r.align(16);
+
+  const ir = Reader(info);
+  ir.pos = 16;                      // skip uncompressedDataHash
+  const blockCount = ir.u32();
+
+  const blocks = [];
+  let total = 0;
+  for (let i = 0; i < blockCount; i++) {
+    const uncompressedSize = ir.u32();
+    const compressedSize = ir.u32();
+    const blockFlags = ir.u16();
+    blocks.push({ uncompressedSize, compressedSize, blockFlags });
+    total += uncompressedSize;
+  }
+
+  const out = new Uint8Array(total);
+  let o = 0;
+  for (const b of blocks) {
+    out.set(decompressBlock(r.bytes(b.compressedSize), b.uncompressedSize, b.blockFlags), o);
+    o += b.uncompressedSize;
+  }
+
+  return { data: out, format, unityVersion, unityRevision, blockCount };
+}
+
+// ---------------------------------------------------------------------------
+// NNUE payload
+//
+// The bundle holds a single TextAsset. Rather than walking the SerializedFile
+// type tree we locate the NNUE magic and trust m_Script's length prefix, which
+// sits in the 4 bytes immediately before it.
+// ---------------------------------------------------------------------------
+const NNUE_MAGIC = [0x16, 0x2f, 0xf3, 0x7a];   // 0x7AF32F16 little-endian
+
+function findEval(data) {
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+
+  for (let i = 4; i + 4 <= data.length; i++) {
+    if (data[i] !== NNUE_MAGIC[0] || data[i + 1] !== NNUE_MAGIC[1] ||
+        data[i + 2] !== NNUE_MAGIC[2] || data[i + 3] !== NNUE_MAGIC[3]) continue;
+
+    const length = view.getInt32(i - 4, true);   // TextAsset.m_Script length prefix
+    if (length <= 0 || i + length > data.length) continue;
+
+    const payload = data.subarray(i, i + length);
+    return { payload, offset: i, arch: readArch(payload) };
+  }
+
+  throw new Error("NNUE 評価関数が見つかりません。rshogi_nn 以外のバンドル（policy / sunfish4 など）ではありませんか？");
+}
+
+/** Header: magic(4) + hash(4) + archStringLength(4) + arch string. */
+function readArch(payload) {
+  const view = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
+  const len = view.getUint32(8, true);
+  if (len === 0 || 12 + len > payload.length) return null;
+  return new TextDecoder("utf-8").decode(payload.subarray(12, 12 + len));
+}
+
+// ---------------------------------------------------------------------------
+// UI
+// ---------------------------------------------------------------------------
+// Known-good values for the eval shipped with catalog version asset-3.0.
+const KNOWN = {
+  size: 32109309,
+  sha256: "a81a86090c0604e5f991f0e66df9b7d80469769c7c5214767e0d449daebadfb9",
+  arch: "HalfKP(Friend)[125388->128x2]",
+};
+
+const $ = (id) => document.getElementById(id);
+const out = $("out");
+const drop = $("drop");
+const picker = $("picker");
+
+$("copyUrl").addEventListener("click", async (e) => {
+  await navigator.clipboard.writeText($("bundleUrl").value);
+  e.target.textContent = "コピーしました";
+  setTimeout(() => { e.target.textContent = "コピー"; }, 1600);
+});
+$("openUrl").addEventListener("click", () => {
+  window.open($("bundleUrl").value, "_blank", "noopener");
+});
+
+drop.addEventListener("click", () => picker.click());
+drop.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); picker.click(); }
+});
+picker.addEventListener("change", () => { if (picker.files[0]) handle(picker.files[0]); });
+
+for (const type of ["dragenter", "dragover"]) {
+  drop.addEventListener(type, (e) => { e.preventDefault(); drop.classList.add("over"); });
+}
+for (const type of ["dragleave", "drop"]) {
+  drop.addEventListener(type, (e) => { e.preventDefault(); drop.classList.remove("over"); });
+}
+drop.addEventListener("drop", (e) => {
+  const file = e.dataTransfer?.files?.[0];
+  if (file) handle(file);
+});
+
+function message(html, bad = false) {
+  out.innerHTML = `<div class="card${bad ? " bad" : ""}">${html}</div>`;
+}
+
+async function sha256Hex(bytes) {
+  if (!globalThis.crypto?.subtle) return null;
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+const fmt = (n) => n.toLocaleString("en-US");
+
+async function handle(file) {
+  message(`<div class="status">展開しています… <span class="mono">${file.name}</span></div>`);
+
+  // let the browser paint before the synchronous decompress
+  await new Promise((r) => setTimeout(r, 0));
+
+  let result;
+  try {
+    const buf = new Uint8Array(await file.arrayBuffer());
+    const bundle = unpackUnityFS(buf);
+    const found = findEval(bundle.data);
+    result = { bundle, found };
+  } catch (err) {
+    message(
+      `<div class="status bad">変換できませんでした</div>
+       <p class="note">${escapeHtml(err.message)}</p>`,
+      true
+    );
+    return;
+  }
+
+  const { bundle, found } = result;
+  const hash = await sha256Hex(found.payload);
+
+  const archOk = found.arch?.includes(KNOWN.arch) ?? false;
+  const exact = found.payload.length === KNOWN.size && hash === KNOWN.sha256;
+
+  const rows = [
+    ["ファイル名", "nn.bin"],
+    ["サイズ", `${fmt(found.payload.length)} バイト`],
+    ["SHA-256", hash ?? "（この環境では計算できません）"],
+    ["Unity", `${bundle.unityRevision} / format ${bundle.format} / ${bundle.blockCount} ブロック`],
+  ];
+
+  let verdict;
+  if (exact) {
+    verdict = `<div class="status ok">✓ 既知の評価関数（asset-3.0）と一致しました</div>`;
+  } else if (archOk) {
+    verdict = `<div class="status ok">✓ 取り出しました</div>
+      <p class="note warn">既知のハッシュとは一致しません。KIOU 側で評価関数が更新された可能性があります。
+      アーキテクチャは一致しているのでエンジンでは読み込めるはずです。</p>`;
+  } else {
+    verdict = `<div class="status bad">⚠ 想定と違うネットワーク構成です</div>
+      <p class="note warn">配布中のエンジンは <span class="mono">${KNOWN.arch}</span> 専用ビルドのため、
+      このファイルは読み込めません。</p>`;
+  }
+
+  out.innerHTML = `
+    <div class="card${archOk ? "" : " bad"}">
+      ${verdict}
+      <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(String(v))}</dd>`).join("")}</dl>
+      ${found.arch ? `<p class="arch">${escapeHtml(found.arch)}</p>` : ""}
+      <button class="primary" id="save">nn.bin をダウンロード</button>
+    </div>`;
+
+  $("save").addEventListener("click", () => {
+    const blob = new Blob([found.payload], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "nn.bin";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  });
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+</script>
+</body>
+</html>
