@@ -3,7 +3,7 @@
 //
 //   node scripts/extract-nn.mjs <bundle> [-o nn.bin]
 //
-// The browser version of this lives in docs/index.html — keep the two in sync.
+// The browser version of this lives in docs/index.html - keep the two in sync.
 
 import { readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
@@ -20,7 +20,7 @@ const KNOWN = {
 // LZ4 block decompressor
 //
 // UnityFS uses raw LZ4 blocks (not the LZ4 frame format). LZ4HC is only a
-// higher-effort encoder — the decoder below handles both.
+// higher-effort encoder - the decoder below handles both.
 // ---------------------------------------------------------------------------
 function lz4Decompress(src, destSize) {
   const dst = new Uint8Array(destSize);
@@ -99,7 +99,7 @@ function unpackUnityFS(buf) {
   const r = Reader(buf);
 
   const signature = r.cstr();
-  if (signature !== "UnityFS") throw new Error(`UnityFS ではありません（signature=${signature || "?"}）`);
+  if (signature !== "UnityFS") throw new Error(`UnityFS ではありません (signature=${signature.slice(0, 16) || "?"})`);
 
   const format = r.u32();
   const unityVersion = r.cstr();
@@ -166,7 +166,7 @@ function findEval(data) {
     return { payload, offset: i, arch: readArch(payload) };
   }
 
-  throw new Error("NNUE 評価関数が見つかりません。rshogi_nn 以外のバンドル（policy / sunfish4 など）ではありませんか？");
+  throw new Error("NNUE 評価関数が見つかりません。rshogi_nn 以外のバンドル (policy / sunfish4 など) ではありませんか?");
 }
 
 /** Header: magic(4) + hash(4) + archStringLength(4) + arch string. */
@@ -209,9 +209,9 @@ console.log(`sha256   : ${sha256}`);
 console.log(`output   : ${output}`);
 
 if (payload.length === KNOWN.size && sha256 === KNOWN.sha256) {
-  console.log("\n✓ 既知の評価関数（asset-3.0）と一致しました");
+  console.log("\n✓ 既知の評価関数 (asset-3.0) と一致しました");
 } else if (arch?.includes(KNOWN.arch)) {
-  console.log("\n✓ 取り出しました（既知のハッシュとは不一致 — 評価関数が更新された可能性があります）");
+  console.log("\n✓ 取り出しました (既知のハッシュとは不一致 - 評価関数が更新された可能性があります) ");
 } else {
   console.error(`\n⚠ 想定と違うネットワーク構成です。配布中のエンジンは ${KNOWN.arch} 専用ビルドのため読み込めません。`);
   process.exit(2);
