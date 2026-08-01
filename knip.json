@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/app/**/{page,layout,template,loading,error,not-found,global-error,providers,route}.{ts,tsx}",
+    "scripts/*.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["src/components/ui/**"],
+  "ignoreDependencies": [
+    "tw-animate-css",
+    "@fontsource-variable/geist",
+    "tailwindcss",
+    "shadcn",
+    "cloudflare",
+    "next"
+  ]
+}
