@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>KiouAI — 評価関数コンバータ</title>
-<meta name="description" content="棋桜（KIOU）の配信アセットから NNUE 評価関数 nn.bin を取り出すブラウザツール。すべてクライアントサイドで動作します。" />
+<title>KiouAI 評価関数コンバータ</title>
+<meta name="description" content="棋桜 (KIOU) の配信アセットから NNUE 評価関数 nn.bin を取り出すブラウザツール。すべてクライアントサイドで動作します。" />
 <style>
   :root {
     color-scheme: light dark;
@@ -114,7 +114,8 @@
 <main>
   <h1>KiouAI 評価関数コンバータ</h1>
   <p class="lede">
-    棋桜（KIOU）の配信アセット <code>.bundle</code> から NNUE 評価関数 <code>nn.bin</code> を取り出します。
+    棋桜 (KIOU) の配信アセット <code>.bundle</code> から NNUE 評価関数 <code>nn.bin</code> を取り出します。
+    下の手順どおりに進めるだけで変換できます。インストールするものはありません。
     処理はすべてブラウザ内で完結し、ファイルはどこにも送信されません。
   </p>
 
@@ -132,7 +133,7 @@
 
   <h2>2. ここにドロップ</h2>
   <div id="drop" tabindex="0" role="button" aria-label="バンドルファイルを選択">
-    <strong>.bundle をドラッグ＆ドロップ</strong>
+    <strong>.bundle をドラッグ&amp;ドロップ</strong>
     <span>クリックしてファイルを選択することもできます</span>
   </div>
   <input type="file" id="picker" accept=".bundle,application/octet-stream" hidden />
@@ -140,7 +141,7 @@
   <div id="out"></div>
 
   <footer>
-    <a href="https://github.com/IPA-Patch/KiouAI">IPA-Patch/KiouAI</a> —
+    <a href="https://github.com/IPA-Patch/KiouAI">IPA-Patch/KiouAI</a><br />
     評価関数の権利は株式会社ネコノメに帰属します。取り出したファイルの再配布はしないでください。
     本ツールは同社とは無関係の非公式プロジェクトです。
   </footer>
@@ -153,7 +154,7 @@
 // LZ4 block decompressor
 //
 // UnityFS uses raw LZ4 blocks (not the LZ4 frame format). LZ4HC is only a
-// higher-effort encoder — the decoder below handles both.
+// higher-effort encoder - the decoder below handles both.
 // ---------------------------------------------------------------------------
 function lz4Decompress(src, destSize) {
   const dst = new Uint8Array(destSize);
@@ -234,7 +235,7 @@ function unpackUnityFS(buf) {
   const r = Reader(buf);
 
   const signature = r.cstr();
-  if (signature !== "UnityFS") throw new Error(`UnityFS ではありません（signature=${signature || "?"}）`);
+  if (signature !== "UnityFS") throw new Error(`UnityFS ではありません (signature=${signature.slice(0, 16) || "?"})`);
 
   const format = r.u32();
   const unityVersion = r.cstr();
@@ -301,7 +302,7 @@ function findEval(data) {
     return { payload, offset: i, arch: readArch(payload) };
   }
 
-  throw new Error("NNUE 評価関数が見つかりません。rshogi_nn 以外のバンドル（policy / sunfish4 など）ではありませんか？");
+  throw new Error("NNUE 評価関数が見つかりません。rshogi_nn 以外のバンドル (policy / sunfish4 など) ではありませんか?");
 }
 
 /** Header: magic(4) + hash(4) + archStringLength(4) + arch string. */
@@ -382,7 +383,7 @@ async function handle(file) {
       `<div class="status bad">変換できませんでした</div>
        <p class="note">${escapeHtml(err.message)}</p>`,
       true
-    );
+);
     return;
   }
 
@@ -395,13 +396,13 @@ async function handle(file) {
   const rows = [
     ["ファイル名", "nn.bin"],
     ["サイズ", `${fmt(found.payload.length)} バイト`],
-    ["SHA-256", hash ?? "（この環境では計算できません）"],
+    ["SHA-256", hash ?? "(この環境では計算できません)"],
     ["Unity", `${bundle.unityRevision} / format ${bundle.format} / ${bundle.blockCount} ブロック`],
   ];
 
   let verdict;
   if (exact) {
-    verdict = `<div class="status ok">✓ 既知の評価関数（asset-3.0）と一致しました</div>`;
+    verdict = `<div class="status ok">✓ 既知の評価関数 (asset-3.0) と一致しました</div>`;
   } else if (archOk) {
     verdict = `<div class="status ok">✓ 取り出しました</div>
       <p class="note warn">既知のハッシュとは一致しません。KIOU 側で評価関数が更新された可能性があります。
@@ -434,7 +435,7 @@ async function handle(file) {
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => (
     { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
-  ));
+));
 }
 </script>
 </body>
