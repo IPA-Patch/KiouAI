@@ -1,7 +1,7 @@
 <h1 align="center">KiouAI</h1>
 
 <p align="center">
-  <em>棋桜 (KIOU) で使われている NNUE 評価関数と、それを読み込めるやねうら王エンジンを配布するリポジトリ。</em>
+  <em>棋桜 (KIOU) の配信アセットから NNUE 評価関数を抽出するツールと、対応エンジンの入手方法を提供するリポジトリ。</em>
 </p>
 
 <p align="center">
@@ -9,7 +9,7 @@
   <img alt="engine" src="https://img.shields.io/badge/engine-YaneuraOu%20v9.60.0-ff66a3?style=flat-square" />
   <img alt="protocol" src="https://img.shields.io/badge/protocol-USI-555?style=flat-square" />
   <img alt="platform" src="https://img.shields.io/badge/platform-Windows%20%2F%20WASM-blue?style=flat-square" />
-  <img alt="license" src="https://img.shields.io/badge/license-GPLv3-1f9d55?style=flat-square" />
+  <img alt="license" src="https://img.shields.io/badge/license-MIT-1f9d55?style=flat-square" />
 </p>
 
 ---
@@ -253,7 +253,7 @@ curl -s $BASE/$VER/iOS/Remote_$VER.json \
 
 ## ライセンスと免責
 
-- このリポジトリの変換ツール / スクリプト / ドキュメントは **GPLv3** です。やねうら王を前提とした派生的な内容を含むため、同じライセンスに揃えています。
+- このリポジトリの変換ツール / スクリプト / ドキュメントは **MIT License** です。やねうら王のソースコードやエンジンバイナリは含まず、評価関数を抽出する独立したツールとして提供しています。ライセンス全文は [LICENSE](LICENSE) を参照してください。
 - エンジンバイナリは[やねうら王](https://github.com/yaneurao/YaneuraOu)の派生物であり、**GPLv3** に従います。配布元は [shielune/YaneuraOu](https://github.com/shielune/YaneuraOu) で、対応するソースも同リポジトリで公開されています。
 - **評価関数はいずれのライセンスにも含まれません。** 権利は株式会社ネコノメに帰属します。このリポジトリでは配布しておらず、利用者が公式 CDN から取得したものを私的な範囲で利用することを想定しています。再配布 / 商用利用はしないでください。
 - 本リポジトリは株式会社ネコノメとは無関係の非公式プロジェクトです。利用によって生じたいかなる損害についても責任を負いません。
