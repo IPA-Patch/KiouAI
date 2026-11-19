@@ -3,3 +3,6 @@ node_modules/
 nn.bin
 .DS_Store
 .claude/settings.local.json
+
+# Local Codex configuration, credentials, and session state.
+/.codex/
